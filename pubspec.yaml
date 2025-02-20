@@ -30,6 +30,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  collection: ^1.17.0
 
   googleapis: ^11.0.0
   googleapis_auth: ^1.4.0
@@ -51,14 +52,6 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
   uses-material-design: true
-
-  fonts:
-    - family: Pretendard
-      fonts:
-        - asset: assets/fonts/Pretendard-Regular.otf
-    - family: NotoSansKR
-      fonts:
-        - asset: assets/fonts/NotoSansKR-Regular.otf
 
   # To add assets to your application, add an assets section, like this:
   assets:
