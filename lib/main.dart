@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'google_sheet_fetcher.dart';
+import 'google_sheet_viewer.dart';
 
 void main() {
   runApp(const MyApp());
@@ -17,7 +18,15 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text('FUZE 다국어 시트'),
+        ),
+        body: const Padding(
+          padding: EdgeInsets.all(16.0),
+          child: GoogleSheetViewer(),
+        ),
+      ),
     );
   }
 }

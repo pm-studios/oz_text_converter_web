@@ -31,11 +31,12 @@ dependencies:
   flutter:
     sdk: flutter
 
-  googleapis: ^12.0.0
-  googleapis_auth: ^1.4.1
+  googleapis: ^11.0.0
+  googleapis_auth: ^1.4.0
   google_sign_in: ^6.1.5
   extension_google_sign_in_as_googleapis_auth: ^2.0.11
   http: ^1.1.0
+  flutter_colorpicker: ^1.0.3
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -50,6 +51,14 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
   uses-material-design: true
+
+  fonts:
+    - family: Pretendard
+      fonts:
+        - asset: assets/fonts/Pretendard-Regular.otf
+    - family: NotoSansKR
+      fonts:
+        - asset: assets/fonts/NotoSansKR-Regular.otf
 
   # To add assets to your application, add an assets section, like this:
   assets:
