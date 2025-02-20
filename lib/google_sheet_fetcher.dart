@@ -1,37 +1,52 @@
 import 'dart:convert';
-import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:googleapis_auth/googleapis_auth.dart' as auth;
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:googleapis_auth/googleapis_auth.dart';
 import 'package:googleapis/sheets/v4.dart' as sheets;
+import 'package:googleapis_auth/auth_io.dart' as auth_io;
 
 class GoogleSheetFetcher {
-  final String _credentialsFile =
-      'assets/credentials.json'; // 앱 내에 JSON 인증 파일을 넣고 이를 사용
+  final String _credentialsFile = 'assets/credentials.json';
   final String _spreadsheetId1 = '1r07cl4D-qZskyOAF62XX96C2yGmlRMGq4Fv7AwHQuis';
   final String _spreadsheetId2 = '16twU0HCETkHsMPWsa09Ze8aQERiDaKmwQ5SxFkUGGDw';
 
   // 구글 인증
-  Future<auth.AutoRefreshingAuthClient> _authenticate() async {
-    final credentials =
-        await auth.computeAuthenticationCredentialsFromJson(_credentialsFile);
-    final client = await auth.clientViaServiceAccount(
-        credentials, [sheets.SheetsApi.SpreadsheetsScope]);
-    return client;
+  Future<AutoRefreshingAuthClient> _authenticate() async {
+    try {
+      print('인증 시작...');
+      final credentialsJson = await rootBundle.loadString(_credentialsFile);
+      print('Credentials 파일 로드 성공');
+      final credentials = ServiceAccountCredentials.fromJson(credentialsJson);
+      final client = await auth_io.clientViaServiceAccount(
+          credentials, [sheets.SheetsApi.spreadsheetsScope]);
+      print('인증 성공!');
+      return client;
+    } catch (e) {
+      print('인증 실패: $e');
+      rethrow;
+    }
   }
 
   // 구글 시트에서 데이터 가져오기
   Future<List<List<String>>> fetchSheetData(
       String sheetId, String sheetName) async {
-    final client = await _authenticate();
-    final sheetsApi = sheets.SheetsApi(client);
+    try {
+      print('시트 데이터 가져오기 시작: $sheetName');
+      final client = await _authenticate();
+      final sheetsApi = sheets.SheetsApi(client);
 
-    final response =
-        await sheetsApi.spreadsheets.values.get(sheetId, '$sheetName!D4:G');
-    final values = response.values;
-    return values
-            ?.map((row) => row.map((item) => item.toString()).toList())
-            .toList() ??
-        [];
+      final response =
+          await sheetsApi.spreadsheets.values.get(sheetId, '$sheetName!D4:G');
+      final values = response.values;
+      print('시트 데이터 가져오기 성공: ${values?.length ?? 0}개 행');
+      print('첫 번째 행 데이터: ${values?.firstOrNull}');
+      return values
+              ?.map((row) => row.map((item) => item.toString()).toList())
+              .toList() ??
+          [];
+    } catch (e) {
+      print('시트 데이터 가져오기 실패: $e');
+      rethrow;
+    }
   }
 
   // JSON 포맷으로 변환
