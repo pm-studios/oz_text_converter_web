@@ -43,7 +43,7 @@ class PreviewStyle {
     this.borderRadius = 12,
     this.backgroundColor = const Color(0xFF2C2C2E),
     this.textColor = Colors.white,
-    this.fontFamily = 'Pretendard Variable',
+    this.fontFamily = 'Pretendard',
     this.fontSize = 15,
     this.padding = const EdgeInsets.all(8),
     this.fontWeight = FontWeight.w400,
@@ -78,6 +78,7 @@ class PreviewComponent extends StatelessWidget {
           fontFamily: style.fontFamily,
           fontSize: style.fontSize,
           fontWeight: style.fontWeight,
+          height: 1.2, // 줄 높이 추가
         ),
       ),
     );
@@ -102,6 +103,19 @@ class _GoogleSheetViewerState extends State<GoogleSheetViewer> {
   Map<String, List<String>> _translations = {};
   String? _selectedKey;
 
+  // FontWeight 옵션 리스트
+  final List<Map<String, dynamic>> _weightOptions = [
+    {'weight': FontWeight.w100, 'label': 'Thin (100)'},
+    {'weight': FontWeight.w200, 'label': 'ExtraLight (200)'},
+    {'weight': FontWeight.w300, 'label': 'Light (300)'},
+    {'weight': FontWeight.w400, 'label': 'Regular (400)'},
+    {'weight': FontWeight.w500, 'label': 'Medium (500)'},
+    {'weight': FontWeight.w600, 'label': 'SemiBold (600)'},
+    {'weight': FontWeight.w700, 'label': 'Bold (700)'},
+    {'weight': FontWeight.w800, 'label': 'ExtraBold (800)'},
+    {'weight': FontWeight.w900, 'label': 'Black (900)'},
+  ];
+
   // 스프레드시트 ID 목록
   final Map<String, String> _spreadsheets = {
     '시트1': '1r07cl4D-qZskyOAF62XX96C2yGmlRMGq4Fv7AwHQuis',
@@ -115,7 +129,7 @@ class _GoogleSheetViewerState extends State<GoogleSheetViewer> {
     borderRadius: 12,
     backgroundColor: Color(0xFF2C2C2E),
     textColor: Colors.white,
-    fontFamily: 'Pretendard Variable',
+    fontFamily: 'Pretendard',
     fontSize: 15,
   );
 
@@ -125,6 +139,12 @@ class _GoogleSheetViewerState extends State<GoogleSheetViewer> {
 
   // ScrollController 추가
   final ScrollController _logScrollController = ScrollController();
+
+  // 폰트 옵션 리스트 추가
+  final List<Map<String, String>> _fontOptions = [
+    {'value': 'Pretendard', 'label': 'Pretendard'},
+    {'value': 'Be Vietnam Pro', 'label': 'Be Vietnam Pro'},
+  ];
 
   void _updatePreviewStyle(PreviewStyle newStyle) {
     setState(() {
@@ -141,7 +161,7 @@ class _GoogleSheetViewerState extends State<GoogleSheetViewer> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 첫 번째 줄: 너비/높이(50%) | 패딩(50%)
+          // 첫 번째 줄: 너비/높이와 패딩 컨트롤
           Row(
             children: [
               // 왼쪽 50%: 너비/높이
@@ -170,9 +190,7 @@ class _GoogleSheetViewerState extends State<GoogleSheetViewer> {
                           SizedBox(
                             height: 20,
                             child: Slider(
-                              value: _previewStyle.width == double.infinity
-                                  ? 400
-                                  : _previewStyle.width,
+                              value: _previewStyle.width,
                               min: 200,
                               max: 800,
                               divisions: 30,
@@ -337,147 +355,174 @@ class _GoogleSheetViewerState extends State<GoogleSheetViewer> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          // 두 번째 줄: 폰트/크기(50%) | 색상(50%)
+          const SizedBox(height: 12),
+          // 두 번째 줄: 폰트 관련 컨트롤들
           Row(
             children: [
-              // 왼쪽 50%: 폰트/크기
+              // 폰트 선택
               Expanded(
-                flex: 1,
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 폰트 선택
-                    SizedBox(
-                      width: 180,
-                      height: 32,
-                      child: DropdownButtonFormField<String>(
-                        value: _previewStyle.fontFamily,
-                        decoration: const InputDecoration(
-                          contentPadding:
-                              EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.grey),
-                          ),
-                          isDense: true,
-                          filled: true,
-                          fillColor: Color(0xFF3C3C3E),
-                        ),
-                        items: const [
-                          DropdownMenuItem(
-                            value: 'Pretendard Variable',
-                            child: Text('Pretendard',
-                                style: TextStyle(fontSize: 12)),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Be Vietnam Pro',
-                            child: Text('Be Vietnam Pro',
-                                style: TextStyle(fontSize: 12)),
-                          ),
-                        ],
-                        onChanged: (String? newValue) {
-                          if (newValue != null) {
-                            setState(() {
-                              _updatePreviewStyle(PreviewStyle(
-                                width: _previewStyle.width,
-                                height: _previewStyle.height,
-                                borderRadius: _previewStyle.borderRadius,
-                                backgroundColor: _previewStyle.backgroundColor,
-                                textColor: _previewStyle.textColor,
-                                fontSize: _previewStyle.fontSize,
-                                fontFamily: newValue,
-                                padding: _previewStyle.padding,
-                                fontWeight: newValue == 'Be Vietnam Pro'
-                                    ? FontWeight.w700
-                                    : FontWeight.w400,
-                              ));
-                            });
-                          }
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    // 폰트 크기 - 슬라이더를 더 길게
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Text('폰트 크기',
-                                  style: TextStyle(fontSize: 12)),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${_previewStyle.fontSize.round()}px',
-                                style: const TextStyle(
-                                    fontSize: 12, color: Colors.grey),
-                              ),
-                            ],
-                          ),
-                          SizedBox(
-                            height: 20,
-                            child: Slider(
-                              value: _previewStyle.fontSize,
-                              min: 12,
-                              max: 32,
-                              divisions: 20,
-                              onChanged: (value) =>
-                                  _updatePreviewStyle(PreviewStyle(
-                                width: _previewStyle.width,
-                                height: _previewStyle.height,
-                                borderRadius: _previewStyle.borderRadius,
-                                backgroundColor: _previewStyle.backgroundColor,
-                                textColor: _previewStyle.textColor,
-                                fontSize: value,
-                                fontFamily: _previewStyle.fontFamily,
-                                padding: _previewStyle.padding,
-                                fontWeight: _previewStyle.fontWeight,
-                              )),
+                    const Text('폰트', style: TextStyle(fontSize: 12)),
+                    DropdownButton<String>(
+                      value: _previewStyle.fontFamily,
+                      isExpanded: true,
+                      items: _fontOptions.map((font) {
+                        return DropdownMenuItem<String>(
+                          value: font['value'],
+                          child: Text(font['label']!),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          _updatePreviewStyle(
+                            PreviewStyle(
+                              width: _previewStyle.width,
+                              height: _previewStyle.height,
+                              borderRadius: _previewStyle.borderRadius,
+                              backgroundColor: _previewStyle.backgroundColor,
+                              textColor: _previewStyle.textColor,
+                              fontFamily: newValue,
+                              fontSize: _previewStyle.fontSize,
+                              padding: _previewStyle.padding,
+                              fontWeight: _previewStyle.fontWeight,
                             ),
-                          ),
-                        ],
+                          );
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              // Weight 선택
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Weight', style: TextStyle(fontSize: 12)),
+                    DropdownButton<FontWeight>(
+                      value: _previewStyle.fontWeight,
+                      isExpanded: true,
+                      items: _weightOptions.map((option) {
+                        return DropdownMenuItem<FontWeight>(
+                          value: option['weight'],
+                          child: Text(option['label']),
+                        );
+                      }).toList(),
+                      onChanged: (FontWeight? newWeight) {
+                        if (newWeight != null) {
+                          _updatePreviewStyle(
+                            PreviewStyle(
+                              width: _previewStyle.width,
+                              height: _previewStyle.height,
+                              borderRadius: _previewStyle.borderRadius,
+                              backgroundColor: _previewStyle.backgroundColor,
+                              textColor: _previewStyle.textColor,
+                              fontFamily: _previewStyle.fontFamily,
+                              fontSize: _previewStyle.fontSize,
+                              padding: _previewStyle.padding,
+                              fontWeight: newWeight,
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              // 폰트 크기
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Text('폰트 크기', style: TextStyle(fontSize: 12)),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${_previewStyle.fontSize.round()}px',
+                          style:
+                              const TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                    SizedBox(
+                      height: 20,
+                      child: Slider(
+                        value: _previewStyle.fontSize,
+                        min: 12,
+                        max: 32,
+                        divisions: 20,
+                        onChanged: (value) => _updatePreviewStyle(PreviewStyle(
+                          width: _previewStyle.width,
+                          height: _previewStyle.height,
+                          borderRadius: _previewStyle.borderRadius,
+                          backgroundColor: _previewStyle.backgroundColor,
+                          textColor: _previewStyle.textColor,
+                          fontSize: value,
+                          fontFamily: _previewStyle.fontFamily,
+                          padding: _previewStyle.padding,
+                          fontWeight: _previewStyle.fontWeight,
+                        )),
                       ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 16),
-              // 오른쪽 50%: 색상
+              // 색상 선택 (배경색과 텍스트색)
               Expanded(
-                flex: 1,
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: _buildCompactColorControl(
-                          '배경', _previewStyle.backgroundColor, (color) {
-                        _updatePreviewStyle(PreviewStyle(
-                          width: _previewStyle.width,
-                          height: _previewStyle.height,
-                          borderRadius: _previewStyle.borderRadius,
-                          backgroundColor: color,
-                          textColor: _previewStyle.textColor,
-                          fontSize: _previewStyle.fontSize,
-                          fontFamily: _previewStyle.fontFamily,
-                          padding: _previewStyle.padding,
-                          fontWeight: _previewStyle.fontWeight,
-                        ));
-                      }),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _buildCompactColorControl(
-                          '글자', _previewStyle.textColor, (color) {
-                        _updatePreviewStyle(PreviewStyle(
-                          width: _previewStyle.width,
-                          height: _previewStyle.height,
-                          borderRadius: _previewStyle.borderRadius,
-                          backgroundColor: _previewStyle.backgroundColor,
-                          textColor: color,
-                          fontSize: _previewStyle.fontSize,
-                          fontFamily: _previewStyle.fontFamily,
-                          padding: _previewStyle.padding,
-                          fontWeight: _previewStyle.fontWeight,
-                        ));
-                      }),
+                    const Text('색상', style: TextStyle(fontSize: 12)),
+                    Row(
+                      children: [
+                        // 배경색
+                        Expanded(
+                          child: _buildCompactColorControl(
+                            '배경',
+                            _previewStyle.backgroundColor,
+                            (color) {
+                              _updatePreviewStyle(PreviewStyle(
+                                width: _previewStyle.width,
+                                height: _previewStyle.height,
+                                borderRadius: _previewStyle.borderRadius,
+                                backgroundColor: color,
+                                textColor: _previewStyle.textColor,
+                                fontSize: _previewStyle.fontSize,
+                                fontFamily: _previewStyle.fontFamily,
+                                padding: _previewStyle.padding,
+                                fontWeight: _previewStyle.fontWeight,
+                              ));
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // 텍스트색
+                        Expanded(
+                          child: _buildCompactColorControl(
+                            '텍스트',
+                            _previewStyle.textColor,
+                            (color) {
+                              _updatePreviewStyle(PreviewStyle(
+                                width: _previewStyle.width,
+                                height: _previewStyle.height,
+                                borderRadius: _previewStyle.borderRadius,
+                                backgroundColor: _previewStyle.backgroundColor,
+                                textColor: color,
+                                fontSize: _previewStyle.fontSize,
+                                fontFamily: _previewStyle.fontFamily,
+                                padding: _previewStyle.padding,
+                                fontWeight: _previewStyle.fontWeight,
+                              ));
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
