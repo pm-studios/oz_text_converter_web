@@ -1,35 +1,43 @@
 import 'package:flutter/material.dart';
 import 'google_sheet_fetcher.dart';
 import 'google_sheet_viewer.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await ScreenUtil.ensureScreenSize();
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'FUZE 다국어 뷰어',
-      theme: ThemeData(
-        colorScheme: ColorScheme.dark(
-          background: const Color(0xFF2C2C2E),
-          surface: const Color(0xFF3C3C3E),
-          primary: Colors.blue,
+    return ScreenUtilInit(
+      designSize: const Size(390, 544),
+      minTextAdapt: true,
+      splitScreenMode: true,
+      builder: (_, child) => MaterialApp(
+        title: 'FUZE 다국어 뷰어',
+        theme: ThemeData(
+          colorScheme: ColorScheme.dark(
+            background: const Color(0xFF2C2C2E),
+            surface: const Color(0xFF3C3C3E),
+            primary: Colors.blue,
+          ),
+          scaffoldBackgroundColor: const Color(0xFF2C2C2E),
+          cardColor: const Color(0xFF3C3C3E),
+          dividerColor: Colors.grey.shade700,
+          useMaterial3: true,
         ),
-        scaffoldBackgroundColor: const Color(0xFF2C2C2E),
-        cardColor: const Color(0xFF3C3C3E),
-        dividerColor: Colors.grey.shade700,
-        useMaterial3: true,
-      ),
-      home: const Scaffold(
-        // appBar 제거
-        body: Padding(
-          padding: EdgeInsets.all(8.0), // 패딩 16에서 8로 줄임
-          child: GoogleSheetViewer(),
+        home: Builder(
+          builder: (context) => const Scaffold(
+            body: Padding(
+              padding: EdgeInsets.all(8.0),
+              child: GoogleSheetViewer(),
+            ),
+          ),
         ),
       ),
     );

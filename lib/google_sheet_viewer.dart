@@ -3,6 +3,7 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:collection/collection.dart';
 import 'resizable_widget.dart';
 import 'google_sheet_fetcher.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 // 로그 메시지를 위한 클래스를 최상위로 이동
 class LogMessage {
@@ -37,13 +38,13 @@ class PreviewStyle {
   final FontWeight fontWeight;
 
   const PreviewStyle({
-    this.width = double.infinity,
+    this.width = 320,
     this.height = 100,
     this.borderRadius = 12,
-    this.backgroundColor = const Color(0xFF2C2C2E), // 이미지의 다크 그레이 말풍선 색상
+    this.backgroundColor = const Color(0xFF2C2C2E),
     this.textColor = Colors.white,
     this.fontFamily = 'Pretendard Variable',
-    this.fontSize = 16,
+    this.fontSize = 15,
     this.padding = const EdgeInsets.all(8),
     this.fontWeight = FontWeight.w400,
   });
@@ -65,7 +66,7 @@ class PreviewComponent extends StatelessWidget {
       width: style.width,
       height: style.height,
       decoration: BoxDecoration(
-        color: style.backgroundColor, // style의 배경색 사용
+        color: style.backgroundColor,
         borderRadius: BorderRadius.circular(style.borderRadius),
         border: Border.all(color: Colors.grey.shade800),
       ),
@@ -73,7 +74,7 @@ class PreviewComponent extends StatelessWidget {
       child: Text(
         text,
         style: TextStyle(
-          color: style.textColor, // style의 텍스트 색상 사용
+          color: style.textColor,
           fontFamily: style.fontFamily,
           fontSize: style.fontSize,
           fontWeight: style.fontWeight,
@@ -109,11 +110,13 @@ class _GoogleSheetViewerState extends State<GoogleSheetViewer> {
 
   // 프리뷰 스타일 상태 관리 - 초기값 수정
   PreviewStyle _previewStyle = const PreviewStyle(
+    width: 320,
     height: 80,
     borderRadius: 12,
-    backgroundColor: Color(0xFF2C2C2E), // 이미지의 다크 그레이 말풍선 색상
+    backgroundColor: Color(0xFF2C2C2E),
     textColor: Colors.white,
-    fontSize: 16,
+    fontFamily: 'Pretendard Variable',
+    fontSize: 15,
   );
 
   // 시트 목록과 키 목록의 ScrollController 추가
@@ -156,7 +159,9 @@ class _GoogleSheetViewerState extends State<GoogleSheetViewer> {
                               const Text('너비', style: TextStyle(fontSize: 12)),
                               const SizedBox(width: 8),
                               Text(
-                                '${_previewStyle.width == double.infinity ? '∞' : _previewStyle.width.round()}',
+                                _previewStyle.width == double.infinity
+                                    ? '∞'
+                                    : '${_previewStyle.width.round()}px',
                                 style: const TextStyle(
                                     fontSize: 12, color: Colors.grey),
                               ),
@@ -199,7 +204,7 @@ class _GoogleSheetViewerState extends State<GoogleSheetViewer> {
                               const Text('높이', style: TextStyle(fontSize: 12)),
                               const SizedBox(width: 8),
                               Text(
-                                '${_previewStyle.height.round()}',
+                                '${_previewStyle.height.round()}px',
                                 style: const TextStyle(
                                     fontSize: 12, color: Colors.grey),
                               ),
@@ -910,306 +915,330 @@ class _GoogleSheetViewerState extends State<GoogleSheetViewer> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'FUZE 다국어 뷰어',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
           ),
-          child: Row(
+        ),
+        titleSpacing: 16, // 좌측 여백 조정
+        centerTitle: false, // 좌측 정렬
+        actions: [
+          Row(
             children: [
-              const Text(
-                'FUZE 다국어 뷰어',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const Spacer(), // 타이틀과 버튼 사이 공간
               ElevatedButton.icon(
                 onPressed: _validateAllSheets,
                 icon: const Icon(Icons.check_circle_outline, size: 18),
                 label: const Text('유효성 검증'),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
+                  backgroundColor: Colors.green.shade700,
+                  foregroundColor: Colors.white,
                 ),
               ),
               const SizedBox(width: 8),
               ElevatedButton.icon(
-                onPressed: () {
-                  // JSON 추출 로직
+                onPressed: () async {
+                  try {
+                    _addLog('📦 JSON 내보내기 시작...');
+                    final fetcher = GoogleSheetFetcher();
+                    await fetcher.generateAllJsonFiles();
+                    _addLog('✅ JSON 파일 생성 완료!', color: Colors.green);
+                  } catch (e) {
+                    _addLog('❌ JSON 내보내기 실패: $e', color: Colors.red);
+                  }
                 },
                 icon: const Icon(Icons.download, size: 18),
                 label: const Text('JSON 내보내기'),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
+                  backgroundColor: Colors.blue.shade700,
+                  foregroundColor: Colors.white,
                 ),
               ),
+              const SizedBox(width: 16),
             ],
           ),
-        ),
-        Expanded(
-          child: Row(
-            children: [
-              // 좌측: 시트 목록
-              SizedBox(
-                width: 180,
-                child: Card(
-                  child: Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(color: Colors.grey.shade300),
-                          ),
-                        ),
-                        child: const Row(
-                          children: [
-                            Text('시트 목록',
-                                style: TextStyle(
-                                    fontSize: 12, fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                      ),
-                      // 시트 목록
-                      Expanded(
-                        child: _loading
-                            ? const Center(child: CircularProgressIndicator())
-                            : ListView.builder(
-                                controller: _sheetScrollController,
-                                itemCount: _allSheets.length,
-                                itemBuilder: (context, index) {
-                                  final sheet = _allSheets[index];
-                                  final isSelected =
-                                      _selectedSheet == sheet.name;
-                                  return ListTile(
-                                    title: Text(
-                                      sheet.name,
-                                      style: TextStyle(
-                                        fontWeight: isSelected
-                                            ? FontWeight.bold
-                                            : FontWeight.normal,
-                                        color: isSelected
-                                            ? Colors.blue
-                                            : Colors.white70,
-                                      ),
-                                    ),
-                                    selected: isSelected,
-                                    selectedTileColor:
-                                        Colors.blue.withOpacity(0.15),
-                                    tileColor: isSelected
-                                        ? Colors.blue.withOpacity(0.05)
-                                        : null,
-                                    onTap: () => _loadKeys(
-                                        sheet.name, sheet.spreadsheetId),
-                                  );
-                                },
-                              ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              // 중앙: 키 목록
-              SizedBox(
-                width: 250,
-                child: Card(
-                  child: Column(
-                    children: [
-                      // 새로고침 버튼을 키 목록 상단으로 이동
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(color: Colors.grey.shade300),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            const Text('키 목록',
-                                style: TextStyle(
-                                    fontSize: 12, fontWeight: FontWeight.bold)),
-                            const Spacer(),
-                            IconButton(
-                              icon: const Icon(Icons.refresh, size: 20),
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                              tooltip: '키 목록 새로고침',
-                              onPressed: _selectedSheet.isEmpty
-                                  ? null
-                                  : () => _refreshCurrentSheet(),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // 키 목록
-                      Expanded(
-                        child: _keys == null
-                            ? const Center(
-                                child: Text('시트를 선택해주세요'),
-                              )
-                            : _loadingKeys
-                                ? const Center(
-                                    child: CircularProgressIndicator())
-                                : ListView.builder(
-                                    controller: _keyScrollController,
-                                    itemCount: _keys?.length ?? 0,
-                                    itemBuilder: (context, index) {
-                                      final key = _keys![index];
-                                      final isSelected = _selectedKey == key;
-                                      return ListTile(
-                                        dense: true,
-                                        title: Text(
-                                          key,
-                                          style: TextStyle(
-                                            fontWeight: isSelected
-                                                ? FontWeight.bold
-                                                : FontWeight.normal,
-                                            color: isSelected
-                                                ? Colors.blue
-                                                : Colors.white70,
-                                          ),
-                                        ),
-                                        selected: isSelected,
-                                        selectedTileColor:
-                                            Colors.blue.withOpacity(0.15),
-                                        tileColor: isSelected
-                                            ? Colors.blue.withOpacity(0.05)
-                                            : null,
-                                        onTap: () {
-                                          setState(() {
-                                            _selectedKey = key;
-                                          });
-                                        },
-                                      );
-                                    },
-                                  ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              // 우측: 선택된 키의 번역 (프리뷰)
-              Expanded(
-                child: Card(
-                  color: const Color(0xFF1C1C1E),
-                  child: _selectedKey == null
-                      ? const Center(
-                          child: Text(
-                            '키를 선택해주세요',
-                            style: TextStyle(color: Colors.white70),
-                          ),
-                        )
-                      : Column(
-                          children: [
-                            _buildStyleControls(),
-                            Expanded(
-                              child: SingleChildScrollView(
-                                padding: const EdgeInsets.all(24.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    PreviewComponent(
-                                      text:
-                                          _translations[_selectedKey]?[0] ?? '',
-                                      style: _previewStyle,
-                                    ),
-                                    const SizedBox(height: 16),
-                                    PreviewComponent(
-                                      text:
-                                          _translations[_selectedKey]?[1] ?? '',
-                                      style: _previewStyle,
-                                    ),
-                                    const SizedBox(height: 16),
-                                    PreviewComponent(
-                                      text:
-                                          _translations[_selectedKey]?[2] ?? '',
-                                      style: _previewStyle,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        // 하단: 로그 콘솔
-        ResizableWidget(
-          child: SizedBox(
-            height: 200, // 초기 높이
-            child: Card(
-              child: Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF2C2C2E),
-                      border: Border(
-                        bottom: BorderSide(color: Colors.grey.shade800),
-                      ),
-                    ),
-                    child: Row(
+        ],
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: Row(
+              children: [
+                // 좌측: 시트 목록
+                SizedBox(
+                  width: 180,
+                  child: Card(
+                    child: Column(
                       children: [
-                        const Text('로그 콘솔',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            )),
-                        const Spacer(),
-                        IconButton(
-                          icon: const Icon(Icons.delete_outline, size: 20),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          tooltip: '로그 지우기',
-                          onPressed: () {
-                            setState(() {
-                              _logs.clear();
-                            });
-                          },
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(color: Colors.grey.shade300),
+                            ),
+                          ),
+                          child: const Row(
+                            children: [
+                              Text('시트 목록',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ),
+                        // 시트 목록
+                        Expanded(
+                          child: _loading
+                              ? const Center(child: CircularProgressIndicator())
+                              : ListView.builder(
+                                  controller: _sheetScrollController,
+                                  itemCount: _allSheets.length,
+                                  itemBuilder: (context, index) {
+                                    final sheet = _allSheets[index];
+                                    final isSelected =
+                                        _selectedSheet == sheet.name;
+                                    return ListTile(
+                                      title: Text(
+                                        sheet.name,
+                                        style: TextStyle(
+                                          fontWeight: isSelected
+                                              ? FontWeight.bold
+                                              : FontWeight.normal,
+                                          color: isSelected
+                                              ? Colors.blue
+                                              : Colors.white70,
+                                        ),
+                                      ),
+                                      selected: isSelected,
+                                      selectedTileColor:
+                                          Colors.blue.withOpacity(0.15),
+                                      tileColor: isSelected
+                                          ? Colors.blue.withOpacity(0.05)
+                                          : null,
+                                      onTap: () => _loadKeys(
+                                          sheet.name, sheet.spreadsheetId),
+                                    );
+                                  },
+                                ),
                         ),
                       ],
                     ),
                   ),
-                  Expanded(
-                    child: ScrollConfiguration(
-                      behavior: ScrollConfiguration.of(context).copyWith(
-                        scrollbars: true,
-                      ),
-                      child: ListView.builder(
-                        controller: _logScrollController,
-                        physics: const ClampingScrollPhysics(),
-                        reverse: true,
-                        itemCount: _logs.length,
-                        itemBuilder: (context, index) {
-                          final realIndex = _logs.length - 1 - index;
-                          if (realIndex < 0 || realIndex >= _logs.length)
-                            return null;
-                          return Padding(
-                            padding: const EdgeInsets.all(4),
-                            child: _buildLogItem(_logs[realIndex]),
-                          );
-                        },
-                      ),
+                ),
+                const SizedBox(width: 8),
+                // 중앙: 키 목록
+                SizedBox(
+                  width: 250,
+                  child: Card(
+                    child: Column(
+                      children: [
+                        // 새로고침 버튼을 키 목록 상단으로 이동
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(color: Colors.grey.shade300),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              const Text('키 목록',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold)),
+                              const Spacer(),
+                              IconButton(
+                                icon: const Icon(Icons.refresh, size: 20),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                tooltip: '키 목록 새로고침',
+                                onPressed: _selectedSheet.isEmpty
+                                    ? null
+                                    : () => _refreshCurrentSheet(),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // 키 목록
+                        Expanded(
+                          child: _keys == null
+                              ? const Center(
+                                  child: Text('시트를 선택해주세요'),
+                                )
+                              : _loadingKeys
+                                  ? const Center(
+                                      child: CircularProgressIndicator())
+                                  : ListView.builder(
+                                      controller: _keyScrollController,
+                                      itemCount: _keys?.length ?? 0,
+                                      itemBuilder: (context, index) {
+                                        final key = _keys![index];
+                                        final isSelected = _selectedKey == key;
+                                        return ListTile(
+                                          dense: true,
+                                          title: Text(
+                                            key,
+                                            style: TextStyle(
+                                              fontWeight: isSelected
+                                                  ? FontWeight.bold
+                                                  : FontWeight.normal,
+                                              color: isSelected
+                                                  ? Colors.blue
+                                                  : Colors.white70,
+                                            ),
+                                          ),
+                                          selected: isSelected,
+                                          selectedTileColor:
+                                              Colors.blue.withOpacity(0.15),
+                                          tileColor: isSelected
+                                              ? Colors.blue.withOpacity(0.05)
+                                              : null,
+                                          onTap: () {
+                                            setState(() {
+                                              _selectedKey = key;
+                                            });
+                                          },
+                                        );
+                                      },
+                                    ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
+                ),
+                const SizedBox(width: 8),
+                // 우측: 선택된 키의 번역 (프리뷰)
+                Expanded(
+                  child: Card(
+                    color: const Color(0xFF1C1C1E),
+                    child: _selectedKey == null
+                        ? const Center(
+                            child: Text(
+                              '키를 선택해주세요',
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                          )
+                        : Column(
+                            children: [
+                              _buildStyleControls(),
+                              Expanded(
+                                child: SingleChildScrollView(
+                                  padding: const EdgeInsets.all(24.0),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      PreviewComponent(
+                                        text: _translations[_selectedKey]?[0] ??
+                                            '',
+                                        style: _previewStyle,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      PreviewComponent(
+                                        text: _translations[_selectedKey]?[1] ??
+                                            '',
+                                        style: _previewStyle,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      PreviewComponent(
+                                        text: _translations[_selectedKey]?[2] ??
+                                            '',
+                                        style: _previewStyle,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // 하단: 로그 콘솔
+          ResizableWidget(
+            onResize: (height) {
+              double newHeight = height;
+              if (newHeight < 100) newHeight = 100;
+              if (newHeight > MediaQuery.of(context).size.height * 0.5) {
+                newHeight = MediaQuery.of(context).size.height * 0.5;
+              }
+              setState(() {});
+              return newHeight;
+            },
+            child: SizedBox(
+              height: 200,
+              child: Card(
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2C2C2E),
+                        border: Border(
+                          bottom: BorderSide(color: Colors.grey.shade800),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Text(
+                            '로그 콘솔',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline, size: 20),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            tooltip: '로그 지우기',
+                            onPressed: () {
+                              setState(() {
+                                _logs.clear();
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: ScrollConfiguration(
+                        behavior: ScrollConfiguration.of(context).copyWith(
+                          scrollbars: true,
+                        ),
+                        child: ListView.builder(
+                          controller: _logScrollController,
+                          physics: const ClampingScrollPhysics(),
+                          reverse: true,
+                          itemCount: _logs.length,
+                          itemBuilder: (context, index) {
+                            final realIndex = _logs.length - 1 - index;
+                            if (realIndex < 0 || realIndex >= _logs.length) {
+                              return null;
+                            }
+                            return Padding(
+                              padding: const EdgeInsets.all(4),
+                              child: _buildLogItem(_logs[realIndex]),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-          onResize: (height) {
-            // 최소 100px, 최대 500px로 제한
-            return height.clamp(100.0, 500.0);
-          },
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
