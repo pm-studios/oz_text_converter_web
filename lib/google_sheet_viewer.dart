@@ -40,8 +40,8 @@ class PreviewStyle {
     this.width = double.infinity,
     this.height = 100,
     this.borderRadius = 12,
-    this.backgroundColor = Colors.white,
-    this.textColor = Colors.black,
+    this.backgroundColor = const Color(0xFF2C2C2E), // 이미지의 다크 그레이 말풍선 색상
+    this.textColor = Colors.white,
     this.fontFamily = 'Pretendard Variable',
     this.fontSize = 16,
     this.padding = const EdgeInsets.all(8),
@@ -65,15 +65,15 @@ class PreviewComponent extends StatelessWidget {
       width: style.width,
       height: style.height,
       decoration: BoxDecoration(
-        color: style.backgroundColor,
+        color: style.backgroundColor, // style의 배경색 사용
         borderRadius: BorderRadius.circular(style.borderRadius),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: Colors.grey.shade800),
       ),
       padding: style.padding,
       child: Text(
         text,
         style: TextStyle(
-          color: style.textColor,
+          color: style.textColor, // style의 텍스트 색상 사용
           fontFamily: style.fontFamily,
           fontSize: style.fontSize,
           fontWeight: style.fontWeight,
@@ -107,12 +107,12 @@ class _GoogleSheetViewerState extends State<GoogleSheetViewer> {
     '시트2': '16twU0HCETkHsMPWsa09Ze8aQERiDaKmwQ5SxFkUGGDw',
   };
 
-  // 프리뷰 스타일 상태 관리
+  // 프리뷰 스타일 상태 관리 - 초기값 수정
   PreviewStyle _previewStyle = const PreviewStyle(
     height: 80,
     borderRadius: 12,
-    backgroundColor: Colors.white,
-    textColor: Colors.black87,
+    backgroundColor: Color(0xFF2C2C2E), // 이미지의 다크 그레이 말풍선 색상
+    textColor: Colors.white,
     fontSize: 16,
   );
 
@@ -133,98 +133,109 @@ class _GoogleSheetViewerState extends State<GoogleSheetViewer> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
+        border: Border(bottom: BorderSide(color: Colors.grey.shade800)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 첫 번째 줄: 너비, 높이, 패딩 설정
+          // 첫 번째 줄: 너비/높이(50%) | 패딩(50%)
           Row(
             children: [
-              // 너비
+              // 왼쪽 50%: 너비/높이
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                flex: 1,
+                child: Row(
                   children: [
-                    Row(
-                      children: [
-                        const Text('너비', style: TextStyle(fontSize: 12)),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${_previewStyle.width == double.infinity ? '∞' : _previewStyle.width.round()}',
-                          style:
-                              const TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                      ],
+                    // 너비
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Text('너비', style: TextStyle(fontSize: 12)),
+                              const SizedBox(width: 8),
+                              Text(
+                                '${_previewStyle.width == double.infinity ? '∞' : _previewStyle.width.round()}',
+                                style: const TextStyle(
+                                    fontSize: 12, color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                          SizedBox(
+                            height: 20,
+                            child: Slider(
+                              value: _previewStyle.width == double.infinity
+                                  ? 400
+                                  : _previewStyle.width,
+                              min: 200,
+                              max: 800,
+                              divisions: 30,
+                              onChanged: (value) =>
+                                  _updatePreviewStyle(PreviewStyle(
+                                width: value,
+                                height: _previewStyle.height,
+                                borderRadius: _previewStyle.borderRadius,
+                                backgroundColor: _previewStyle.backgroundColor,
+                                textColor: _previewStyle.textColor,
+                                fontSize: _previewStyle.fontSize,
+                                fontFamily: _previewStyle.fontFamily,
+                                padding: _previewStyle.padding,
+                                fontWeight: _previewStyle.fontWeight,
+                              )),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    SizedBox(
-                      height: 20,
-                      child: Slider(
-                        value: _previewStyle.width == double.infinity
-                            ? 400
-                            : _previewStyle.width,
-                        min: 200,
-                        max: 800,
-                        divisions: 30,
-                        onChanged: (value) => _updatePreviewStyle(PreviewStyle(
-                          width: value,
-                          height: _previewStyle.height,
-                          borderRadius: _previewStyle.borderRadius,
-                          backgroundColor: _previewStyle.backgroundColor,
-                          textColor: _previewStyle.textColor,
-                          fontSize: _previewStyle.fontSize,
-                          fontFamily: _previewStyle.fontFamily,
-                          padding: _previewStyle.padding,
-                          fontWeight: _previewStyle.fontWeight,
-                        )),
+                    const SizedBox(width: 8),
+                    // 높이
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Text('높이', style: TextStyle(fontSize: 12)),
+                              const SizedBox(width: 8),
+                              Text(
+                                '${_previewStyle.height.round()}',
+                                style: const TextStyle(
+                                    fontSize: 12, color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                          SizedBox(
+                            height: 20,
+                            child: Slider(
+                              value: _previewStyle.height,
+                              min: 40,
+                              max: 200,
+                              divisions: 16,
+                              onChanged: (value) =>
+                                  _updatePreviewStyle(PreviewStyle(
+                                width: _previewStyle.width,
+                                height: value,
+                                borderRadius: _previewStyle.borderRadius,
+                                backgroundColor: _previewStyle.backgroundColor,
+                                textColor: _previewStyle.textColor,
+                                fontSize: _previewStyle.fontSize,
+                                fontFamily: _previewStyle.fontFamily,
+                                padding: _previewStyle.padding,
+                                fontWeight: _previewStyle.fontWeight,
+                              )),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              // 높이
+              const SizedBox(width: 16),
+              // 오른쪽 50%: 패딩
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Text('높이', style: TextStyle(fontSize: 12)),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${_previewStyle.height.round()}',
-                          style:
-                              const TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                    SizedBox(
-                      height: 20,
-                      child: Slider(
-                        value: _previewStyle.height,
-                        min: 40,
-                        max: 200,
-                        divisions: 16,
-                        onChanged: (value) => _updatePreviewStyle(PreviewStyle(
-                          width: _previewStyle.width,
-                          height: value,
-                          borderRadius: _previewStyle.borderRadius,
-                          backgroundColor: _previewStyle.backgroundColor,
-                          textColor: _previewStyle.textColor,
-                          fontSize: _previewStyle.fontSize,
-                          fontFamily: _previewStyle.fontFamily,
-                          padding: _previewStyle.padding,
-                          fontWeight: _previewStyle.fontWeight,
-                        )),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              // 패딩 부분 수정
-              Expanded(
+                flex: 1,
                 child: Row(
                   children: [
                     // 상하 패딩
@@ -322,129 +333,147 @@ class _GoogleSheetViewerState extends State<GoogleSheetViewer> {
             ],
           ),
           const SizedBox(height: 8),
-          // 두 번째 줄: 폰트, 폰트 크기, 색상 설정
+          // 두 번째 줄: 폰트/크기(50%) | 색상(50%)
           Row(
             children: [
-              // 폰트 선택
+              // 왼쪽 50%: 폰트/크기
               Expanded(
-                child: SizedBox(
-                  height: 32,
-                  child: DropdownButtonFormField<String>(
-                    value: _previewStyle.fontFamily,
-                    decoration: const InputDecoration(
-                      contentPadding:
-                          EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                    ),
-                    items: const [
-                      DropdownMenuItem(
-                        value: 'Pretendard Variable',
-                        child:
-                            Text('Pretendard', style: TextStyle(fontSize: 12)),
-                      ),
-                      DropdownMenuItem(
-                        value: 'Be Vietnam Pro',
-                        child: Text('Be Vietnam Pro',
-                            style: TextStyle(fontSize: 12)),
-                      ),
-                    ],
-                    onChanged: (String? newValue) {
-                      if (newValue != null) {
-                        setState(() {
-                          _updatePreviewStyle(PreviewStyle(
-                            width: _previewStyle.width,
-                            height: _previewStyle.height,
-                            borderRadius: _previewStyle.borderRadius,
-                            backgroundColor: _previewStyle.backgroundColor,
-                            textColor: _previewStyle.textColor,
-                            fontSize: _previewStyle.fontSize,
-                            fontFamily: newValue,
-                            padding: _previewStyle.padding,
-                            fontWeight: newValue == 'Be Vietnam Pro'
-                                ? FontWeight.w700
-                                : FontWeight.w400,
-                          ));
-                        });
-                      }
-                    },
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              // 폰트 크기
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                flex: 1,
+                child: Row(
                   children: [
-                    Row(
-                      children: [
-                        const Text('폰트 크기', style: TextStyle(fontSize: 12)),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${_previewStyle.fontSize.round()}px',
-                          style:
-                              const TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                      ],
-                    ),
+                    // 폰트 선택
                     SizedBox(
-                      height: 20,
-                      child: Slider(
-                        value: _previewStyle.fontSize,
-                        min: 12,
-                        max: 32,
-                        divisions: 20,
-                        onChanged: (value) => _updatePreviewStyle(PreviewStyle(
-                          width: _previewStyle.width,
-                          height: _previewStyle.height,
-                          borderRadius: _previewStyle.borderRadius,
-                          backgroundColor: _previewStyle.backgroundColor,
-                          textColor: _previewStyle.textColor,
-                          fontSize: value,
-                          fontFamily: _previewStyle.fontFamily,
-                          padding: _previewStyle.padding,
-                          fontWeight: _previewStyle.fontWeight,
-                        )),
+                      width: 180,
+                      height: 32,
+                      child: DropdownButtonFormField<String>(
+                        value: _previewStyle.fontFamily,
+                        decoration: const InputDecoration(
+                          contentPadding:
+                              EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.grey),
+                          ),
+                          isDense: true,
+                          filled: true,
+                          fillColor: Color(0xFF3C3C3E),
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'Pretendard Variable',
+                            child: Text('Pretendard',
+                                style: TextStyle(fontSize: 12)),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Be Vietnam Pro',
+                            child: Text('Be Vietnam Pro',
+                                style: TextStyle(fontSize: 12)),
+                          ),
+                        ],
+                        onChanged: (String? newValue) {
+                          if (newValue != null) {
+                            setState(() {
+                              _updatePreviewStyle(PreviewStyle(
+                                width: _previewStyle.width,
+                                height: _previewStyle.height,
+                                borderRadius: _previewStyle.borderRadius,
+                                backgroundColor: _previewStyle.backgroundColor,
+                                textColor: _previewStyle.textColor,
+                                fontSize: _previewStyle.fontSize,
+                                fontFamily: newValue,
+                                padding: _previewStyle.padding,
+                                fontWeight: newValue == 'Be Vietnam Pro'
+                                    ? FontWeight.w700
+                                    : FontWeight.w400,
+                              ));
+                            });
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // 폰트 크기 - 슬라이더를 더 길게
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Text('폰트 크기',
+                                  style: TextStyle(fontSize: 12)),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${_previewStyle.fontSize.round()}px',
+                                style: const TextStyle(
+                                    fontSize: 12, color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                          SizedBox(
+                            height: 20,
+                            child: Slider(
+                              value: _previewStyle.fontSize,
+                              min: 12,
+                              max: 32,
+                              divisions: 20,
+                              onChanged: (value) =>
+                                  _updatePreviewStyle(PreviewStyle(
+                                width: _previewStyle.width,
+                                height: _previewStyle.height,
+                                borderRadius: _previewStyle.borderRadius,
+                                backgroundColor: _previewStyle.backgroundColor,
+                                textColor: _previewStyle.textColor,
+                                fontSize: value,
+                                fontFamily: _previewStyle.fontFamily,
+                                padding: _previewStyle.padding,
+                                fontWeight: _previewStyle.fontWeight,
+                              )),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              // 색상 선택
+              const SizedBox(width: 16),
+              // 오른쪽 50%: 색상
               Expanded(
+                flex: 1,
                 child: Row(
                   children: [
-                    _buildCompactColorControl(
-                        '배경',
-                        _previewStyle.backgroundColor,
-                        (color) => _updatePreviewStyle(PreviewStyle(
-                              width: _previewStyle.width,
-                              height: _previewStyle.height,
-                              borderRadius: _previewStyle.borderRadius,
-                              backgroundColor: color,
-                              textColor: _previewStyle.textColor,
-                              fontSize: _previewStyle.fontSize,
-                              fontFamily: _previewStyle.fontFamily,
-                              padding: _previewStyle.padding,
-                              fontWeight: _previewStyle.fontWeight,
-                            ))),
-                    const SizedBox(width: 4),
-                    _buildCompactColorControl(
-                        '글자',
-                        _previewStyle.textColor,
-                        (color) => _updatePreviewStyle(PreviewStyle(
-                              width: _previewStyle.width,
-                              height: _previewStyle.height,
-                              borderRadius: _previewStyle.borderRadius,
-                              backgroundColor: _previewStyle.backgroundColor,
-                              textColor: color,
-                              fontSize: _previewStyle.fontSize,
-                              fontFamily: _previewStyle.fontFamily,
-                              padding: _previewStyle.padding,
-                              fontWeight: _previewStyle.fontWeight,
-                            ))),
+                    Expanded(
+                      child: _buildCompactColorControl(
+                          '배경', _previewStyle.backgroundColor, (color) {
+                        _updatePreviewStyle(PreviewStyle(
+                          width: _previewStyle.width,
+                          height: _previewStyle.height,
+                          borderRadius: _previewStyle.borderRadius,
+                          backgroundColor: color,
+                          textColor: _previewStyle.textColor,
+                          fontSize: _previewStyle.fontSize,
+                          fontFamily: _previewStyle.fontFamily,
+                          padding: _previewStyle.padding,
+                          fontWeight: _previewStyle.fontWeight,
+                        ));
+                      }),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildCompactColorControl(
+                          '글자', _previewStyle.textColor, (color) {
+                        _updatePreviewStyle(PreviewStyle(
+                          width: _previewStyle.width,
+                          height: _previewStyle.height,
+                          borderRadius: _previewStyle.borderRadius,
+                          backgroundColor: _previewStyle.backgroundColor,
+                          textColor: color,
+                          fontSize: _previewStyle.fontSize,
+                          fontFamily: _previewStyle.fontFamily,
+                          padding: _previewStyle.padding,
+                          fontWeight: _previewStyle.fontWeight,
+                        ));
+                      }),
+                    ),
                   ],
                 ),
               ),
@@ -457,39 +486,49 @@ class _GoogleSheetViewerState extends State<GoogleSheetViewer> {
 
   Widget _buildCompactColorControl(
       String label, Color color, Function(Color) onColorChanged) {
+    final TextEditingController controller = TextEditingController(
+      text: '#${color.value.toRadixString(16).padLeft(8, '0').substring(2)}',
+    );
+
     return Row(
       children: [
         Text(label, style: const TextStyle(fontSize: 12)),
         const SizedBox(width: 8),
-        Container(
-          width: 24,
-          height: 24,
-          decoration: BoxDecoration(
-            color: color,
-            border: Border.all(color: Colors.grey),
-            borderRadius: BorderRadius.circular(4),
-          ),
-        ),
-        TextButton(
-          style: TextButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-          ),
-          onPressed: () {
+        // 색상 박스를 버튼으로 변경
+        InkWell(
+          onTap: () {
             showDialog(
               context: context,
               builder: (context) => AlertDialog(
                 title: Text(label),
                 content: SingleChildScrollView(
-                  child: ColorPicker(
-                    pickerColor: color,
-                    onColorChanged: onColorChanged,
-                    pickerAreaHeightPercent: 0.8,
-                    enableAlpha: false,
-                    displayThumbColor: true,
-                    showLabel: true,
-                    paletteType: PaletteType.hsvWithHue,
-                    pickerAreaBorderRadius:
-                        const BorderRadius.all(Radius.circular(10)),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ColorPicker(
+                        pickerColor: color,
+                        onColorChanged: onColorChanged,
+                        pickerAreaHeightPercent: 0.8,
+                        enableAlpha: false,
+                        displayThumbColor: true,
+                        showLabel: true,
+                        paletteType: PaletteType.hsvWithHue,
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          _buildColorInput('R', color.red, (v) {
+                            onColorChanged(color.withRed(v));
+                          }),
+                          _buildColorInput('G', color.green, (v) {
+                            onColorChanged(color.withGreen(v));
+                          }),
+                          _buildColorInput('B', color.blue, (v) {
+                            onColorChanged(color.withBlue(v));
+                          }),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
                 actions: [
@@ -501,9 +540,63 @@ class _GoogleSheetViewerState extends State<GoogleSheetViewer> {
               ),
             );
           },
-          child: const Text('선택', style: TextStyle(fontSize: 12)),
+          child: Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              color: color,
+              border: Border.all(color: Colors.grey),
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        // HTML 컬러 코드 입력 필드
+        Expanded(
+          child: TextField(
+            controller: controller,
+            style: const TextStyle(fontSize: 12),
+            decoration: const InputDecoration(
+              contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              border: OutlineInputBorder(),
+              isDense: true,
+            ),
+            onSubmitted: (value) {
+              try {
+                if (value.startsWith('#')) {
+                  final color =
+                      Color(int.parse('FF${value.substring(1)}', radix: 16));
+                  onColorChanged(color);
+                }
+              } catch (e) {
+                print('Invalid color format');
+              }
+            },
+          ),
         ),
       ],
+    );
+  }
+
+  Widget _buildColorInput(String label, int value, Function(int) onChanged) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: TextField(
+          decoration: InputDecoration(
+            labelText: label,
+            isDense: true,
+          ),
+          keyboardType: TextInputType.number,
+          controller: TextEditingController(text: value.toString()),
+          onSubmitted: (v) {
+            final intValue = int.tryParse(v);
+            if (intValue != null && intValue >= 0 && intValue <= 255) {
+              onChanged(intValue);
+            }
+          },
+        ),
+      ),
     );
   }
 
@@ -791,7 +884,7 @@ class _GoogleSheetViewerState extends State<GoogleSheetViewer> {
             child: Text(
               log.message,
               style: TextStyle(
-                color: log.color ?? Colors.black87,
+                color: log.color ?? Colors.white70,
                 fontFamily: 'monospace',
                 fontSize: 13,
               ),
@@ -807,7 +900,7 @@ class _GoogleSheetViewerState extends State<GoogleSheetViewer> {
       child: Text(
         log.message,
         style: TextStyle(
-          color: log.color ?? Colors.black87,
+          color: log.color ?? Colors.white70,
           fontFamily: 'monospace',
           fontSize: 13,
         ),
@@ -819,6 +912,43 @@ class _GoogleSheetViewerState extends State<GoogleSheetViewer> {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+          ),
+          child: Row(
+            children: [
+              const Text(
+                'FUZE 다국어 뷰어',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const Spacer(), // 타이틀과 버튼 사이 공간
+              ElevatedButton.icon(
+                onPressed: _validateAllSheets,
+                icon: const Icon(Icons.check_circle_outline, size: 18),
+                label: const Text('유효성 검증'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                onPressed: () {
+                  // JSON 추출 로직
+                },
+                icon: const Icon(Icons.download, size: 18),
+                label: const Text('JSON 내보내기'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                ),
+              ),
+            ],
+          ),
+        ),
         Expanded(
           child: Row(
             children: [
@@ -828,7 +958,6 @@ class _GoogleSheetViewerState extends State<GoogleSheetViewer> {
                 child: Card(
                   child: Column(
                     children: [
-                      // 시트 목록 헤더 부분 수정
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
@@ -836,25 +965,11 @@ class _GoogleSheetViewerState extends State<GoogleSheetViewer> {
                             bottom: BorderSide(color: Colors.grey.shade300),
                           ),
                         ),
-                        child: Column(
+                        child: const Row(
                           children: [
-                            Row(
-                              children: [
-                                const Text('시트 목록',
-                                    style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold)),
-                                const Spacer(),
-                                IconButton(
-                                  icon: const Icon(Icons.check_circle_outline,
-                                      size: 20),
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(),
-                                  tooltip: '모든 시트 유효성 검증',
-                                  onPressed: _validateAllSheets,
-                                ),
-                              ],
-                            ),
+                            Text('시트 목록',
+                                style: TextStyle(
+                                    fontSize: 12, fontWeight: FontWeight.bold)),
                           ],
                         ),
                       ),
@@ -878,7 +993,7 @@ class _GoogleSheetViewerState extends State<GoogleSheetViewer> {
                                             : FontWeight.normal,
                                         color: isSelected
                                             ? Colors.blue
-                                            : Colors.black,
+                                            : Colors.white70,
                                       ),
                                     ),
                                     selected: isSelected,
@@ -955,7 +1070,7 @@ class _GoogleSheetViewerState extends State<GoogleSheetViewer> {
                                                 : FontWeight.normal,
                                             color: isSelected
                                                 ? Colors.blue
-                                                : Colors.black,
+                                                : Colors.white70,
                                           ),
                                         ),
                                         selected: isSelected,
@@ -981,9 +1096,13 @@ class _GoogleSheetViewerState extends State<GoogleSheetViewer> {
               // 우측: 선택된 키의 번역 (프리뷰)
               Expanded(
                 child: Card(
+                  color: const Color(0xFF1C1C1E),
                   child: _selectedKey == null
                       ? const Center(
-                          child: Text('키를 선택해주세요'),
+                          child: Text(
+                            '키를 선택해주세요',
+                            style: TextStyle(color: Colors.white70),
+                          ),
                         )
                       : Column(
                           children: [
@@ -1032,15 +1151,18 @@ class _GoogleSheetViewerState extends State<GoogleSheetViewer> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.grey[200],
+                      color: const Color(0xFF2C2C2E),
                       border: Border(
-                        bottom: BorderSide(color: Colors.grey.shade300),
+                        bottom: BorderSide(color: Colors.grey.shade800),
                       ),
                     ),
                     child: Row(
                       children: [
                         const Text('로그 콘솔',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            )),
                         const Spacer(),
                         IconButton(
                           icon: const Icon(Icons.delete_outline, size: 20),

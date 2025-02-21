@@ -13,17 +13,22 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'FUZE 다국어 뷰어',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.dark(
+          background: const Color(0xFF2C2C2E),
+          surface: const Color(0xFF3C3C3E),
+          primary: Colors.blue,
+        ),
+        scaffoldBackgroundColor: const Color(0xFF2C2C2E),
+        cardColor: const Color(0xFF3C3C3E),
+        dividerColor: Colors.grey.shade700,
         useMaterial3: true,
       ),
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('FUZE 다국어 시트'),
-        ),
-        body: const Padding(
-          padding: EdgeInsets.all(16.0),
+      home: const Scaffold(
+        // appBar 제거
+        body: Padding(
+          padding: EdgeInsets.all(8.0), // 패딩 16에서 8로 줄임
           child: GoogleSheetViewer(),
         ),
       ),
