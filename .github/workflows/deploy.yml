@@ -21,7 +21,13 @@ jobs:
         run: flutter pub get
         
       - name: Build web
-        run: flutter build web --base-href "/oz_text_converter_web/"  # 레포지토리 이름으로 수정해주세요
+        run: |
+          flutter build web --base-href "/oz_text_converter_web/"
+          cp web/index.prod.html build/web/index.html
+        
+      - name: Create credentials file
+        run: |
+          echo "${{ secrets.GOOGLE_CREDENTIALS }}" > assets/credentials.json
         
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3

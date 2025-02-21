@@ -1,9 +1,6 @@
 import 'dart:convert';
-import 'package:flutter/services.dart' show rootBundle;
-import 'package:googleapis_auth/googleapis_auth.dart';
-import 'package:googleapis/sheets/v4.dart' as sheets;
-import 'package:googleapis_auth/auth_io.dart' as auth_io;
 import 'dart:html' as html;
+import 'package:http/http.dart' as http;
 
 // 복수형 데이터를 위한 클래스를 최상위 레벨로 이동
 class PluralTextData {
@@ -15,61 +12,108 @@ class PluralTextData {
 }
 
 class GoogleSheetFetcher {
-  final String _credentialsFile = 'assets/credentials.json';
   final String _spreadsheetId1 = '1r07cl4D-qZskyOAF62XX96C2yGmlRMGq4Fv7AwHQuis';
   final String _spreadsheetId2 = '16twU0HCETkHsMPWsa09Ze8aQERiDaKmwQ5SxFkUGGDw';
-
-  // 인증 클라이언트를 저장할 static 변수
-  static AutoRefreshingAuthClient? _authClient;
-
-  // 구글 인증
-  Future<AutoRefreshingAuthClient> _authenticate() async {
-    try {
-      // 이미 인증된 클라이언트가 있다면 재사용
-      if (_authClient != null) {
-        return _authClient!;
-      }
-
-      print('인증 시작...');
-      final credentialsJson = await rootBundle.loadString(_credentialsFile);
-      print('Credentials 파일 로드 성공');
-      final credentials = ServiceAccountCredentials.fromJson(credentialsJson);
-      _authClient = await auth_io.clientViaServiceAccount(
-          credentials, [sheets.SheetsApi.spreadsheetsScope]);
-      print('인증 성공!');
-      return _authClient!;
-    } catch (e) {
-      print('인증 실패: $e');
-      rethrow;
-    }
-  }
 
   // 구글 시트에서 데이터 가져오기
   Future<List<List<String>>> fetchSheetData(
       String sheetId, String sheetName) async {
     try {
-      print('시트 데이터 가져오기 시작: $sheetName');
-      final client = await _authenticate();
-      final sheetsApi = sheets.SheetsApi(client);
+      print('\x1B[36m시트 데이터 가져오기 시작: $sheetName\x1B[0m');
+      String range = 'D4:G';
 
-      // A4:D에서 D4:G로 변경 (4~7열 데이터를 가져오도록)
-      final response =
-          await sheetsApi.spreadsheets.values.get(sheetId, '$sheetName!D4:G');
-      final values = response.values;
-      print('시트 데이터 가져오기 성공: ${values?.length ?? 0}개 행');
-      if (values?.isNotEmpty ?? false) {
-        print('첫 번째 행 데이터: ${values?.first}');
+      final url =
+          Uri.parse('https://docs.google.com/spreadsheets/d/$sheetId/gviz/tq?'
+              'tqx=out:csv&sheet=$sheetName&range=$range');
+
+      print('Fetching URL: $url');
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final List<List<String>> rows = [];
+        try {
+          final lines = LineSplitter.split(response.body);
+          for (var line in lines) {
+            if (line.trim().isEmpty) continue;
+
+            List<String> cells = [];
+            bool inQuotes = false;
+            StringBuffer currentCell = StringBuffer();
+            int cellIndex = 0; // 현재 처리 중인 셀의 인덱스
+
+            // 문자 단위로 처리
+            for (int i = 0; i < line.length; i++) {
+              String char = line[i];
+
+              if (char == '"') {
+                if (i + 1 < line.length && line[i + 1] == '"') {
+                  currentCell.write('"');
+                  i++;
+                } else {
+                  inQuotes = !inQuotes;
+                }
+              } else if (char == ',' && !inQuotes) {
+                // 셀 추가 전에 키 검증
+                String cellValue = currentCell.toString().trim();
+                if (cellIndex == 0 && !_isValidKey(cellValue)) {
+                  // 첫 번째 셀(키)이 유효하지 않으면 이 행을 건너뜀
+                  cells.clear();
+                  break;
+                }
+                cells.add(cellValue);
+                currentCell.clear();
+                cellIndex++;
+              } else {
+                currentCell.write(char);
+              }
+            }
+
+            // 마지막 셀 처리
+            if (cells.isNotEmpty ||
+                _isValidKey(currentCell.toString().trim())) {
+              cells.add(currentCell.toString().trim());
+
+              // 키가 유효한 경우에만 처리
+              if (!cells.isEmpty && _isValidKey(cells[0])) {
+                // 셀이 4개가 되도록 보장
+                while (cells.length < 4) {
+                  cells.add('');
+                  print(
+                      '\x1B[33m경고: [$sheetName] 키 "${cells[0]}"의 번역이 누락되었습니다.\x1B[0m');
+                }
+
+                print('\x1B[90mRow data (CSV): $cells\x1B[0m');
+                rows.add(cells);
+              }
+            }
+          }
+
+          print('\x1B[32m시트 데이터 가져오기 성공: ${rows.length}개 행\x1B[0m');
+          return rows;
+        } catch (e) {
+          print('\x1B[31mCSV 파싱 실패: $e\x1B[0m');
+          rethrow;
+        }
       } else {
-        print('가져온 데이터가 없습니다.');
+        throw Exception('Failed to load sheet data: ${response.statusCode}');
       }
-      return values
-              ?.map((row) => row.map((item) => item.toString()).toList())
-              .toList() ??
-          [];
     } catch (e) {
-      print('시트 데이터 가져오기 실패: $e');
+      print('\x1B[31m시트 데이터 가져오기 실패: $e\x1B[0m');
       rethrow;
     }
+  }
+
+  // 키 유효성 검사 메서드 추가
+  bool _isValidKey(String key) {
+    if (key.isEmpty) return false;
+
+    // 키는 영문, 숫자, 하이픈, 점만 포함해야 함
+    final validKeyPattern = RegExp(r'^[a-zA-Z0-9\-\.]+$');
+
+    // 키는 영문으로 시작해야 함
+    final startsWithLetter = RegExp(r'^[a-zA-Z]');
+
+    return validKeyPattern.hasMatch(key) && startsWithLetter.hasMatch(key);
   }
 
   // JSON 포맷으로 변환
@@ -131,17 +175,35 @@ class GoogleSheetFetcher {
   // 스프레드시트의 모든 시트 목록 가져오기
   Future<List<String>> getSheetList(String spreadsheetId) async {
     try {
-      final client = await _authenticate();
-      final sheetsApi = sheets.SheetsApi(client);
+      // 스프레드시트 ID별로 시트 목록 반환
+      if (spreadsheetId == _spreadsheetId1) {
+        return [
+          'Signup',
+          'Collection',
+          'Space',
+          'Rate',
+          'Game Detail',
+          'Search',
+          'Message',
+          'Notification',
+        ];
+      } else if (spreadsheetId == _spreadsheetId2) {
+        return [
+          'Community',
+          'Onboarding',
+          'Profile',
+          'Rating Pitch',
+          'Setting',
+          'Report',
+          'Refferal system',
+        ];
+      }
 
-      final spreadsheet = await sheetsApi.spreadsheets.get(spreadsheetId);
-      return spreadsheet.sheets
-              ?.map((sheet) => sheet.properties!.title!)
-              .toList() ??
-          [];
+      print('Unknown spreadsheet ID: $spreadsheetId');
+      return [];
     } catch (e) {
       print('시트 목록 가져오기 실패: $e');
-      rethrow;
+      return [];
     }
   }
 
@@ -155,7 +217,7 @@ class GoogleSheetFetcher {
 
   Future<void> generateLanguageJson(String lang, String fileName) async {
     try {
-      print('Starting to generate $fileName...');
+      print('\x1B[36mStarting to generate $fileName...\x1B[0m');
       final sheetData1 = await fetchSheetData(_spreadsheetId1, 'Signup');
       print('Fetched Signup sheet data: ${sheetData1.length} rows');
       final sheetData2 = await fetchSheetData(_spreadsheetId2, 'Community');
@@ -242,19 +304,19 @@ class GoogleSheetFetcher {
         ..click();
       html.Url.revokeObjectUrl(url);
 
-      print('Successfully generated and downloaded $fileName');
-      print('Total keys: ${savedKeys.length}');
-      print('Total plural forms: ${pluralList.length}');
+      print('\x1B[32mSuccessfully generated and downloaded $fileName\x1B[0m');
+      print('\x1B[36mTotal keys: ${savedKeys.length}\x1B[0m');
+      print('\x1B[36mTotal plural forms: ${pluralList.length}\x1B[0m');
     } catch (e, stackTrace) {
-      print('Error generating $fileName:');
-      print('Error: $e');
-      print('Stack trace: $stackTrace');
+      print('\x1B[31mError generating $fileName:\x1B[0m');
+      print('\x1B[31mError: $e\x1B[0m');
+      print('\x1B[31mStack trace: $stackTrace\x1B[0m');
     }
   }
 
   Future<void> generateLocalizationKeyFile() async {
     try {
-      print('Starting to generate localization_key.dart...');
+      print('\x1B[36mStarting to generate localization_key.dart...\x1B[0m');
       final sheetData1 = await fetchSheetData(_spreadsheetId1, 'Signup');
       print('Fetched Signup sheet data: ${sheetData1.length} rows');
       final sheetData2 = await fetchSheetData(_spreadsheetId2, 'Community');
@@ -287,7 +349,7 @@ class GoogleSheetFetcher {
         }
 
         if (savedKeys.contains(dartKey)) {
-          print('Duplicate key found: $dartKey');
+          print('\x1B[33m중복 키 발견: $dartKey\x1B[0m');
           continue;
         }
         savedKeys.add(dartKey);
@@ -308,12 +370,13 @@ class GoogleSheetFetcher {
         ..click();
       html.Url.revokeObjectUrl(url);
 
-      print('Successfully generated and downloaded localization_key.dart');
-      print('Total processed keys: $processedKeys');
+      print(
+          '\x1B[32mSuccessfully generated and downloaded localization_key.dart\x1B[0m');
+      print('\x1B[36mTotal processed keys: $processedKeys\x1B[0m');
     } catch (e, stackTrace) {
-      print('Error generating localization_key.dart:');
-      print('Error: $e');
-      print('Stack trace: $stackTrace');
+      print('\x1B[31mError generating localization_key.dart:\x1B[0m');
+      print('\x1B[31mError: $e\x1B[0m');
+      print('\x1B[31mStack trace: $stackTrace\x1B[0m');
     }
   }
 
